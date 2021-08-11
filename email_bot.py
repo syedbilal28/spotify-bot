@@ -7,6 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.keys import Keys
 import time,bs4
+import os,zipfile
 from source import open_and_click, open_and_input,find,open_link,find_xpath
 email="bigbloggerdeluxe@gmail.com"
 password="Testkit1"
@@ -19,7 +20,9 @@ by, login_selector, cookies_selector = By.CSS_SELECTOR,"button._3f37264be67c8f40
 unread_emails_selector="tr.zE"
 confirm_emails_div_selector="div.gs"
 confirm_xpath='/html/body/div[7]/div[3]/div/div[2]/div[1]/div[2]/div/div/div/div/div[2]/div/div[1]/div/div[2]/div/table/tr/td[1]/div[2]/div[2]/div/div[3]/div/div/div/div/div/div[1]/div[2]/div[3]/div[3]/div[1]/div/table/tbody/tr/td/div/table[4]/tbody/tr[2]/td[2]/table/tbody/tr/td/div/a'
-confirm_email_xpath="//*[contains(text(), 'CONFIRM EMAIL')]"
+confirm_email_xpath="//*[contains(text(), 'CONFIRM EMAIL')]|//*[contains(text(), 'BEKRÄFTA E-POSTADRESS')]|//*[contains(text(), 'CONFIRMAR CORREO ELECTRÓNICO')]|//*[contains(text(), '確認電子郵件')]"
+
+
 driver = webdriver.Chrome(path_driver)
 
 driver.maximize_window()
@@ -37,7 +40,7 @@ for j,i in enumerate(unread_emails):
     tds=soup.find_all("td")
     subject=tds[3].find("span",{"class":"zF"})
     desc=tds[4].find("span",{"class":"bqe"})
-    if "Spotify" in subject and "Confirm your new email address" in desc:
+    if "Spotify" in subject:
         
         selected_emails.append(i)
 for k in range(len(selected_emails)):
@@ -52,7 +55,8 @@ for k in range(len(selected_emails)):
         tds=soup.find_all("td")
         subject=tds[3].find("span",{"class":"zF"})
         desc=tds[4].find("span",{"class":"bqe"})
-        if "Spotify" in subject and "Confirm your new email address" in desc:
+        print(f"subject {subject}")
+        if "Spotify" in subject:
             print("found")
             i.click()
             print("clicked")
@@ -66,12 +70,14 @@ for k in range(len(selected_emails)):
                 open_and_click(actions,driver,delay,more_selector)
             
             # try:
-            confirm_email_div=find(actions,driver,delay,confirm_emails_div_selector)
+            confirm_email_div=find(actions,driver,15,confirm_emails_div_selector)
+            print(f"confirm buttons {confirm_email_div}")
             l=len(confirm_email_div)
             for z in range(l):
+                # print(confirm_email_div[z].tag_name,confirm_email_div[z].get_attribute("innerHTML"))
                 confirm_email_div[z].click()
             
-            multiple_conf_buttons=find_xpath(actions,driver,delay,confirm_email_xpath)
+            multiple_conf_buttons=find_xpath(actions,driver,10,confirm_email_xpath)
             print(f"found emails {multiple_conf_buttons}")
             
 
@@ -100,7 +106,7 @@ for k in range(len(selected_emails)):
                             # driver.get("https://mail.google.com")
                         except:    
                         # print("going back except")
-                        driver.refresh()
+                            driver.refresh()
                         # time.sleep(5)
                 driver.back()
         else:

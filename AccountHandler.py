@@ -36,3 +36,13 @@ def CreateAccounts(accounts_file,to_change_file):
 
     print(len(to_change_accounts))
 
+def get_proxies():
+    infile=open("proxies.txt","r")
+    content=infile.readlines()
+    infile.close()
+    proxies=[]
+    for i in content:
+        proxy=i.split(":")
+        proxies.append((proxy[0],int(proxy[1]),proxy[2],proxy[3]))
+    print(proxies)
+    return proxies
