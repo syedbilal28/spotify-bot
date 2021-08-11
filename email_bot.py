@@ -68,36 +68,41 @@ for k in range(len(selected_emails)):
             # try:
             confirm_email_div=find(actions,driver,delay,confirm_emails_div_selector)
             l=len(confirm_email_div)
-            for i in range(l):
-                confirm_email_div[i].click()
+            for z in range(l):
+                confirm_email_div[z].click()
             
             multiple_conf_buttons=find_xpath(actions,driver,delay,confirm_email_xpath)
             print(f"found emails {multiple_conf_buttons}")
             
 
-            confirm_button=find_xpath(actions,driver,delay,confirm_xpath)
-            if confirm_button:
+            
+            if multiple_conf_buttons:
+
                 print("found confirm")
-                try:
-                    time.sleep(3)
-                    open_and_click(actions,driver,10,xpath=confirm_xpath)
-                    print('clicked confirm')
-                    time.sleep(2)
-                    driver.switch_to_window(driver.window_handles[0])
-                    print("switching")
-                    # driver.get("https://mail.google.com")
-                    driver.back()
-                    print("going back")
-                    
-                    time.sleep(5)        
-                    
-                    # print("switching windows")
-                except:
-                    # driver.get("https://mail.google.com")
-                    driver.back()
-                    print("going back except")
-                    driver.refresh()
-                    time.sleep(5)
+                for button in multiple_conf_buttons: 
+                    print(button.tag_name)
+                    if button.tag_name =="td":
+                        try:
+                            button.click()                        
+                            
+                            print('clicked confirm')
+                            time.sleep(2)
+                            driver.switch_to_window(driver.window_handles[0])
+                            print("switching")
+                            # driver.get("https://mail.google.com")
+                            
+                            print("going back")
+                            
+                            time.sleep(5)        
+                            
+                            # print("switching windows")
+                        
+                            # driver.get("https://mail.google.com")
+                        except:    
+                        # print("going back except")
+                        driver.refresh()
+                        # time.sleep(5)
+                driver.back()
         else:
             pass
 
