@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 from source import open_and_click,open_and_input
 from AccountHandler import CreateAccounts,get_proxies
 from selenium.webdriver.common.proxy import Proxy, ProxyType
-import threading,os,zipfile
+import threading,os,zipfile,random
 path_driver = "chromedriver.exe"
 email="dummy6109@gmail.com"
 password="inspirehot"
@@ -57,6 +57,7 @@ def change_email(driver,actions):
             open_and_input(actions,driver,0,password_input_selector,password,0,True)
             open_and_click(actions,driver,delay,selector=user_widget_selector)
             open_and_click(actions,driver,delay,selector=account_button_selector)
+            driver.close()
             driver.switch_to_window(driver.window_handles[-1])
             print(driver.current_url)
             sliced=driver.current_url.split("/")
@@ -67,7 +68,12 @@ def change_email(driver,actions):
             open_and_click(actions,driver,delay,selector=account_button_selector_edit)
             open_and_click(actions,driver,delay,selector=logout_button_selector)
             accounts.pop(0)
-            new_accounts.append([new_email,new_password])
+            outfile=open("new_accounts.txt","a")
+            
+            outfile.write(f"{new_email}:{new_password}\n")
+            outfile.close()
+            driver.quit()
+            
         except:
             driver.get("https://www.spotify.com/pk-en/logout/")
             driver.switch_to_window(driver.window_handles[-1])
@@ -89,73 +95,71 @@ def get_chromedriver(use_proxy=False, user_agent=None):
         path_driver,
         chrome_options=chrome_options)
     return driver
-
-for i in range(count):
-    PROXY_HOST = proxies[count-1][0]  # rotating proxy or host
-    PROXY_PORT = proxies[count-1][1] # port
-    PROXY_USER = proxies[count-1][2] # username
-    PROXY_PASS = proxies[count-1][3] # password
-    manifest_json = """
-    {
-        "version": "1.0.0",
-        "manifest_version": 2,
-        "name": "Chrome Proxy",
-        "permissions": [
-            "proxy",
-            "tabs",
-            "unlimitedStorage",
-            "storage",
-            "<all_urls>",
-            "webRequest",
-            "webRequestBlocking"
-        ],
-        "background": {
-            "scripts": ["background.js"]
-        },
-        "minimum_chrome_version":"22.0.0"
-    }
-    """
-
-    background_js = """
-    var config = {
-            mode: "fixed_servers",
-            rules: {
-            singleProxy: {
-                scheme: "http",
-                host: "%s",
-                port: parseInt(%s)
+len_proxies=len(proxies)-1
+thread_count=0
+while True:
+    if threading.activeCount() <= count:
+        num=random.randint(0,len_proxies)
+        PROXY_HOST = proxies[num][0]  # rotating proxy or host
+        PROXY_PORT = proxies[num][1] # port
+        
+        manifest_json = """
+        {
+            "version": "1.0.0",
+            "manifest_version": 2,
+            "name": "Chrome Proxy",
+            "permissions": [
+                "proxy",
+                "tabs",
+                "unlimitedStorage",
+                "storage",
+                "<all_urls>",
+                "webRequest",
+                "webRequestBlocking"
+            ],
+            "background": {
+                "scripts": ["background.js"]
             },
-            bypassList: ["localhost"]
-            }
-        };
+            "minimum_chrome_version":"22.0.0"
+        }
+        """
 
-    chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
+        background_js = """
+        var config = {
+                mode: "fixed_servers",
+                rules: {
+                singleProxy: {
+                    scheme: "http",
+                    host: "%s",
+                    port: parseInt(%s)
+                },
+                bypassList: ["localhost"]
+                }
+            };
 
-    function callbackFn(details) {
-        return {
-            authCredentials: {
-                username: "%s",
-                password: "%s"
-            }
-        };
-    }
+        chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
 
-    chrome.webRequest.onAuthRequired.addListener(
-                callbackFn,
-                {urls: ["<all_urls>"]},
-                ['blocking']
-    );
-    """ % (PROXY_HOST, PROXY_PORT, PROXY_USER, PROXY_PASS)
+        function callbackFn(details) {
+            return {
+                
+            };
+        }
 
-    driver = get_chromedriver(use_proxy=True)
-    actions = ActionChains(driver)
-    browserThread=threading.Thread(target=change_email,args=(driver,actions))
-    browserThread.start()
+        chrome.webRequest.onAuthRequired.addListener(
+                    callbackFn,
+                    {urls: ["<all_urls>"]},
+                    ['blocking']
+        );
+        """ % (PROXY_HOST, PROXY_PORT)
+        PROXY = f"{PROXY_HOST}:{PROXY_PORT}" # IP:PORT or HOST:PORT
 
-outfile=open("new_accounts.txt","w")
-for account in new_accounts:
-    outfile.write(f"{account[0]}:{account[1]}\n")
-outfile.close()
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument('--proxy-server=%s' % PROXY)
+        driver = webdriver.Chrome("chromedriver.exe",options=chrome_options)
+        actions = ActionChains(driver)
+        browserThread=threading.Thread(target=change_email,args=(driver,actions))
+        browserThread.start()
+
 
 
 

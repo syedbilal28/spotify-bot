@@ -16,8 +16,11 @@ def CreateAccounts(accounts_file,to_change_file):
     old_accounts=[]
     for i in accounts_exist:
         temp=i.split(":")
-        new_account=Account(temp[0],temp[1])
-        old_accounts.append(new_account)
+        try:
+            new_account=Account(temp[0],temp[1])
+            old_accounts.append(new_account)
+        except:
+            pass
     accounts_file.close()
 
     change_file=open(to_change_file,"r")
@@ -29,7 +32,10 @@ def CreateAccounts(accounts_file,to_change_file):
     print(len(old_accounts),len(changes_exist))
     to_change_accounts=[]
     for i in range(l):
-        to_change_accounts.append(ChangeAccount(old_accounts[i],changes_exist[i]))
+        try:
+            to_change_accounts.append(ChangeAccount(old_accounts[i],changes_exist[i]))
+        except:
+            pass
     print(len(old_accounts))
     print(len(changes_exist))
     return to_change_accounts
@@ -43,6 +49,6 @@ def get_proxies():
     proxies=[]
     for i in content:
         proxy=i.split(":")
-        proxies.append((proxy[0],int(proxy[1]),proxy[2],proxy[3]))
+        proxies.append((proxy[0],int(proxy[1])))
     print(proxies)
     return proxies
