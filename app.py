@@ -2,10 +2,10 @@ from io import SEEK_CUR
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
-from source import open_and_click,open_and_input
+from source import open_and_click,open_and_input,find,open_link,find_xpath
 from AccountHandler import CreateAccounts,get_proxies
 from selenium.webdriver.common.proxy import Proxy, ProxyType
-import threading,os,zipfile,random
+import threading,os,zipfile,random,time,bs4
 path_driver = "chromedriver.exe"
 email="dummy6109@gmail.com"
 password="inspirehot"
@@ -14,6 +14,23 @@ new_email="dummy6133@gmail.com"
 new_password="inspirehot"
 # driver = webdriver.Chrome(path_driver)
 
+# Email bot variables
+infile=open("email.txt","r")
+content=infile.read()
+infile.close()
+content=content.split(":")
+gmail_email=content[0]
+gmail_password=content[1]
+delay=100
+path_driver = "chromedriver.exe"
+gmail_input_selector="input.whsOnd"
+password_selector="input.whsOnd"
+more_selector="div.ajR"
+by, login_selector, cookies_selector = By.CSS_SELECTOR,"button._3f37264be67c8f40fa9f76449afdb4bd-scss", "button#onetrust-accept-btn-handler"
+unread_emails_selector="tr.zE"
+confirm_emails_div_selector="div.gs"
+confirm_xpath='/html/body/div[7]/div[3]/div/div[2]/div[1]/div[2]/div/div/div/div/div[2]/div/div[1]/div/div[2]/div/table/tr/td[1]/div[2]/div[2]/div/div[3]/div/div/div/div/div/div[1]/div[2]/div[3]/div[3]/div[1]/div/table/tbody/tr/td/div/table[4]/tbody/tr[2]/td[2]/table/tbody/tr/td/div/a'
+confirm_email_xpath="//*[contains(text(), 'CONFIRM EMAIL')]|//*[contains(text(), 'BEKRÄFTA E-POSTADRESS')]|//*[contains(text(), 'CONFIRMAR CORREO ELECTRÓNICO')]|//*[contains(text(), '確認電子郵件')]"
 
 
 
@@ -40,6 +57,26 @@ count=4
 new_accounts=[]
 proxies=get_proxies()
 
+def login(actions,driver,delay):
+    driver.get(r'https://accounts.google.com/signin/v2/identifier?continue='+'https%3A%2F%2Fmail.google.com%2Fmail%2F&service=mail&sacu=1&rip=1'+'&flowName=GlifWebSignIn&flowEntry = ServiceLogin')
+    open_and_input(actions,driver,delay,gmail_input_selector,gmail_email,0,True)
+    time.sleep(10)
+    open_and_input(actions,driver,delay,password_selector,gmail_password,0,True)
+
+def get_unread_emails(actions,driver,delay):
+    unread_emails= find(actions,driver,delay,unread_emails_selector)
+    selected_emails=[]
+    for j,i in enumerate(unread_emails):
+        innerhtml=i.get_attribute("innerHTML")
+        soup = bs4.BeautifulSoup(innerhtml,"html.parser")
+        tds=soup.find_all("td")
+        subject=tds[3].find("span",{"class":"zF"})
+        desc=tds[4].find("span",{"class":"bqe"})
+        if "Spotify" in subject:
+            
+            selected_emails.append(i)
+    return selected_emails
+
 def change_email(driver,actions):
     
 
@@ -55,7 +92,7 @@ def change_email(driver,actions):
             open_and_click(actions,driver,delay,selector=login_selector,choice=0)
             open_and_input(actions,driver,delay,email_input_selector,email)
             open_and_input(actions,driver,0,password_input_selector,password,0,True)
-            open_and_click(actions,driver,delay,selector=user_widget_selector)
+            open_and_click(actions,driver,50,selector=user_widget_selector)
             open_and_click(actions,driver,delay,selector=account_button_selector)
             driver.close()
             driver.switch_to_window(driver.window_handles[-1])
@@ -70,8 +107,76 @@ def change_email(driver,actions):
             accounts.pop(0)
             outfile=open("new_accounts.txt","a")
             
-            outfile.write(f"{new_email}:{new_password}\n")
+            outfile.write(new_email+":"+new_password)
             outfile.close()
+            login(actions,driver,delay)
+            selected_emails=get_unread_emails(actions,driver,delay)
+            for k in range(len(selected_emails)):
+
+                unread_emails= find(actions,driver,delay,unread_emails_selector)
+                print("got unread emails")
+                
+                for j,i in enumerate(unread_emails):
+                    time.sleep(2)
+                    innerhtml=i.get_attribute("innerHTML")
+                    soup = bs4.BeautifulSoup(innerhtml,"html.parser")
+                    tds=soup.find_all("td")
+                    subject=tds[3].find("span",{"class":"zF"})
+                    desc=tds[4].find("span",{"class":"bqe"})
+                    print(f"subject {subject}")
+                    if "Spotify" in subject:
+                        print("found")
+                        i.click()
+                        print("clicked")
+                        more_button=find(actions,driver,10,more_selector)
+
+                        if more_button:
+                            print("found more button")
+                            open_and_click(actions,driver,delay,more_selector)
+                        confirm_email_div=find(actions,driver,15,confirm_emails_div_selector)
+                        print(f"confirm buttons {confirm_email_div}")
+                        l=len(confirm_email_div)
+                        for z in range(l):
+                            # print(confirm_email_div[z].tag_name,confirm_email_div[z].get_attribute("innerHTML"))
+                            confirm_email_div[z].click()
+                        # multiple_conf_buttons=find_xpath(actions,driver,10,confirm_email_xpath)
+                        # print(f"found emails {multiple_conf_buttons}")
+                        
+
+                        
+                        # if multiple_conf_buttons:
+
+                        #     print("found confirm")
+                        #     for button in multiple_conf_buttons: 
+                        #         # print(button.tag_name)
+                        #         if button.tag_name =="td":
+                        #             try:
+                        #                 button.click()                        
+                                        
+                        #                 print('clicked confirm')
+                        #                 time.sleep(2)
+                        #                 driver.switch_to_window(driver.window_handles[-1])
+                        #                 driver.close()
+                        #                 driver.switch_to_window(driver.window_handles[0])
+                        #                 print("switching")
+                                        
+                        #                 # driver.get("https://mail.google.com")
+                                        
+                        #                 print("going back")
+                                        
+                        #                 time.sleep(5)        
+                                        
+                        #                 # print("switching windows")
+                                    
+                        #                 # driver.get("https://mail.google.com")
+                        #             except:    
+                        #             # print("going back except")
+                        #                 driver.refresh()
+                        #             # time.sleep(5)
+                        #     driver.back()
+                
+
+            
             driver.quit()
             
         except:
@@ -96,9 +201,10 @@ def get_chromedriver(use_proxy=False, user_agent=None):
         chrome_options=chrome_options)
     return driver
 len_proxies=len(proxies)-1
-thread_count=0
+thread_count=int(input("Enter the number of threads: "))
+
 while True:
-    if threading.activeCount() <= count:
+    if threading.activeCount() <= thread_count:
         num=random.randint(0,len_proxies)
         PROXY_HOST = proxies[num][0]  # rotating proxy or host
         PROXY_PORT = proxies[num][1] # port

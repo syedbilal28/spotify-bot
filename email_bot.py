@@ -33,13 +33,13 @@ confirm_email_xpath="//*[contains(text(), 'CONFIRM EMAIL')]|//*[contains(text(),
 
 # driver.maximize_window()
 # actions = ActionChains(driver)
-
-def click_confirm(driver,actions):
+def login(actions,driver,delay):
     driver.get(r'https://accounts.google.com/signin/v2/identifier?continue='+'https%3A%2F%2Fmail.google.com%2Fmail%2F&service=mail&sacu=1&rip=1'+'&flowName=GlifWebSignIn&flowEntry = ServiceLogin')
     open_and_input(actions,driver,delay,email_input_selector,email,0,True)
     time.sleep(10)
     open_and_input(actions,driver,delay,password_selector,password,0,True)
 
+def get_unread_emails(actions,driver,delay):
     unread_emails= find(actions,driver,delay,unread_emails_selector)
     selected_emails=[]
     for j,i in enumerate(unread_emails):
@@ -51,6 +51,10 @@ def click_confirm(driver,actions):
         if "Spotify" in subject:
             
             selected_emails.append(i)
+    return selected_emails
+def click_confirm(driver,actions):
+    login(actions,driver,delay)
+    selected_emails=get_unread_emails(actions,driver,delay)
     for k in range(len(selected_emails)):
 
         unread_emails= find(actions,driver,delay,unread_emails_selector)
@@ -197,7 +201,7 @@ for i in range(count):
     PROXY = f"{PROXY_HOST}:{PROXY_PORT}" # IP:PORT or HOST:PORT
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--proxy-server=%s' % PROXY)
-    driver = webdriver.Chrome("chromedriver.exe",chrome_options=chrome_options)
+    driver = webdriver.Chrome("chromedriver.exe")
     
     actions = ActionChains(driver)
     print(PROXY_HOST,PROXY_PORT)
