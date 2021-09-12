@@ -80,110 +80,110 @@ def get_unread_emails(actions,driver,delay):
 def change_email(driver,actions):
     
 
-    l= len(accounts)
-    for j in range(l):
-        try:
-            driver.get("https://open.spotify.com")
-            email=accounts[0].current_account.email
-            password=accounts[0].current_account.password
-            new_email=accounts[0].change_account.email
-            new_password=accounts[0].current_account.password
+    
+    try:
+        driver.get("https://open.spotify.com")
+        email=accounts.pop(0).current_account.email
+        password=accounts.pop(0).current_account.password
+        new_email=accounts.pop(0).change_account.email
+        new_password=accounts.pop(0).current_account.password
 
-            open_and_click(actions,driver,delay,selector=login_selector,choice=0)
-            open_and_input(actions,driver,delay,email_input_selector,email)
-            open_and_input(actions,driver,0,password_input_selector,password,0,True)
-            open_and_click(actions,driver,50,selector=user_widget_selector)
-            open_and_click(actions,driver,delay,selector=account_button_selector)
-            driver.close()
-            driver.switch_to_window(driver.window_handles[-1])
-            print(driver.current_url)
-            sliced=driver.current_url.split("/")
-            new_url=sliced[0]+"//"+sliced[2]+"/"+sliced[3]+"/"+sliced[4]+"/"+"profile/"
-            driver.get(new_url)
-            open_and_input(actions,driver,delay,email_change_selector,new_email)
-            open_and_input(actions,driver,delay,edit_password_selector,new_password,0,True)
-            open_and_click(actions,driver,delay,selector=account_button_selector_edit)
-            open_and_click(actions,driver,delay,selector=logout_button_selector)
-            accounts.pop(0)
-            outfile=open("new_accounts.txt","a")
+        open_and_click(actions,driver,delay,selector=login_selector,choice=0)
+        open_and_input(actions,driver,delay,email_input_selector,email)
+        open_and_input(actions,driver,0,password_input_selector,password,0,True)
+        open_and_click(actions,driver,50,selector=user_widget_selector)
+        open_and_click(actions,driver,delay,selector=account_button_selector)
+        driver.close()
+        driver.switch_to_window(driver.window_handles[-1])
+        print(driver.current_url)
+        sliced=driver.current_url.split("/")
+        new_url=sliced[0]+"//"+sliced[2]+"/"+sliced[3]+"/"+sliced[4]+"/"+"profile/"
+        driver.get(new_url)
+        open_and_input(actions,driver,delay,email_change_selector,new_email)
+        open_and_input(actions,driver,delay,edit_password_selector,new_password,0,True)
+        open_and_click(actions,driver,delay,selector=account_button_selector_edit)
+        open_and_click(actions,driver,delay,selector=logout_button_selector)
+        # accounts.pop(0)
+        outfile=open("new_accounts.txt","a")
+        
+        outfile.write(new_email+":"+new_password)
+        outfile.close()
+        login(actions,driver,delay)
+        selected_emails=get_unread_emails(actions,driver,delay)
+        for k in range(len(selected_emails)):
+
+            unread_emails= find(actions,driver,delay,unread_emails_selector)
+            print("got unread emails")
             
-            outfile.write(new_email+":"+new_password)
-            outfile.close()
-            login(actions,driver,delay)
-            selected_emails=get_unread_emails(actions,driver,delay)
-            for k in range(len(selected_emails)):
+            for j,i in enumerate(unread_emails):
+                time.sleep(2)
+                innerhtml=i.get_attribute("innerHTML")
+                soup = bs4.BeautifulSoup(innerhtml,"html.parser")
+                tds=soup.find_all("td")
+                subject=tds[3].find("span",{"class":"zF"})
+                desc=tds[4].find("span",{"class":"bqe"})
+                print(f"subject {subject}")
+                if "Spotify" in subject:
+                    print("found")
+                    i.click()
+                    print("clicked")
+                    more_button=find(actions,driver,10,more_selector)
 
-                unread_emails= find(actions,driver,delay,unread_emails_selector)
-                print("got unread emails")
-                
-                for j,i in enumerate(unread_emails):
-                    time.sleep(2)
-                    innerhtml=i.get_attribute("innerHTML")
-                    soup = bs4.BeautifulSoup(innerhtml,"html.parser")
-                    tds=soup.find_all("td")
-                    subject=tds[3].find("span",{"class":"zF"})
-                    desc=tds[4].find("span",{"class":"bqe"})
-                    print(f"subject {subject}")
-                    if "Spotify" in subject:
-                        print("found")
-                        i.click()
-                        print("clicked")
-                        more_button=find(actions,driver,10,more_selector)
+                    if more_button:
+                        print("found more button")
+                        open_and_click(actions,driver,delay,more_selector)
+                    confirm_email_div=find(actions,driver,15,confirm_emails_div_selector)
+                    print(f"confirm buttons {confirm_email_div}")
+                    l=len(confirm_email_div)
+                    for z in range(l):
+                        # print(confirm_email_div[z].tag_name,confirm_email_div[z].get_attribute("innerHTML"))
+                        confirm_email_div[z].click()
+                    # multiple_conf_buttons=find_xpath(actions,driver,10,confirm_email_xpath)
+                    # print(f"found emails {multiple_conf_buttons}")
+                    
 
-                        if more_button:
-                            print("found more button")
-                            open_and_click(actions,driver,delay,more_selector)
-                        confirm_email_div=find(actions,driver,15,confirm_emails_div_selector)
-                        print(f"confirm buttons {confirm_email_div}")
-                        l=len(confirm_email_div)
-                        for z in range(l):
-                            # print(confirm_email_div[z].tag_name,confirm_email_div[z].get_attribute("innerHTML"))
-                            confirm_email_div[z].click()
-                        # multiple_conf_buttons=find_xpath(actions,driver,10,confirm_email_xpath)
-                        # print(f"found emails {multiple_conf_buttons}")
-                        
+                    
+                    # if multiple_conf_buttons:
 
-                        
-                        # if multiple_conf_buttons:
-
-                        #     print("found confirm")
-                        #     for button in multiple_conf_buttons: 
-                        #         # print(button.tag_name)
-                        #         if button.tag_name =="td":
-                        #             try:
-                        #                 button.click()                        
-                                        
-                        #                 print('clicked confirm')
-                        #                 time.sleep(2)
-                        #                 driver.switch_to_window(driver.window_handles[-1])
-                        #                 driver.close()
-                        #                 driver.switch_to_window(driver.window_handles[0])
-                        #                 print("switching")
-                                        
-                        #                 # driver.get("https://mail.google.com")
-                                        
-                        #                 print("going back")
-                                        
-                        #                 time.sleep(5)        
-                                        
-                        #                 # print("switching windows")
+                    #     print("found confirm")
+                    #     for button in multiple_conf_buttons: 
+                    #         # print(button.tag_name)
+                    #         if button.tag_name =="td":
+                    #             try:
+                    #                 button.click()                        
                                     
-                        #                 # driver.get("https://mail.google.com")
-                        #             except:    
-                        #             # print("going back except")
-                        #                 driver.refresh()
-                        #             # time.sleep(5)
-                        #     driver.back()
-                
-
+                    #                 print('clicked confirm')
+                    #                 time.sleep(2)
+                    #                 driver.switch_to_window(driver.window_handles[-1])
+                    #                 driver.close()
+                    #                 driver.switch_to_window(driver.window_handles[0])
+                    #                 print("switching")
+                                    
+                    #                 # driver.get("https://mail.google.com")
+                                    
+                    #                 print("going back")
+                                    
+                    #                 time.sleep(5)        
+                                    
+                    #                 # print("switching windows")
+                                
+                    #                 # driver.get("https://mail.google.com")
+                    #             except:    
+                    #             # print("going back except")
+                    #                 driver.refresh()
+                    #             # time.sleep(5)
+                    #     driver.back()
             
-            driver.quit()
-            
-        except:
-            driver.get("https://www.spotify.com/pk-en/logout/")
-            driver.switch_to_window(driver.window_handles[-1])
-            accounts.pop(0)
 
+        
+        driver.quit()
+        
+    except:
+        # driver.get("https://www.spotify.com/pk-en/logout/")
+        # driver.switch_to_window(driver.window_handles[-1])
+        # accounts.pop(0)
+        driver.quit()
+    # thread.exit()
 def get_chromedriver(use_proxy=False, user_agent=None):
     path = os.path.dirname(os.path.abspath(__file__))
     chrome_options = webdriver.ChromeOptions()
@@ -204,6 +204,7 @@ len_proxies=len(proxies)-1
 thread_count=int(input("Enter the number of threads: "))
 
 while True:
+    print(f"current threads: {threading.activeCount()}")
     if threading.activeCount() <= thread_count:
         num=random.randint(0,len_proxies)
         PROXY_HOST = proxies[num][0]  # rotating proxy or host
@@ -261,7 +262,7 @@ while True:
 
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument('--proxy-server=%s' % PROXY)
-        driver = webdriver.Chrome("chromedriver.exe",options=chrome_options)
+        driver = webdriver.Chrome("chromedriver.exe",chrome_options=chrome_options)
         actions = ActionChains(driver)
         browserThread=threading.Thread(target=change_email,args=(driver,actions))
         browserThread.start()

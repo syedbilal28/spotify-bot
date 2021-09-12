@@ -4,3 +4,6 @@ spotify.zip
 proxy_auth_plugin.zip
 build/
 dist/
+app.spec
+chromdedriver.exe
+app.py

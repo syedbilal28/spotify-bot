@@ -1,11 +1,9 @@
-# a=[1,2,3,4,5,6]
-# l=6
-# for i in range(l):
-#     a.pop(0)
-#     print(a)
+import bs4
 
-email="asb@gmail.com"
-password="askfnoasnfo"
-outfile=open("test.txt","a")
-outfile.write(f"{email}:{password}")
-outfile.close()
+html='<tr class="zA yO x7" jscontroller="ZdOxDb" jsaction="Tnvr6c:RNc9jf;PG1zDd:eyrEaf;WGbBt:UL4Ddb;nVvxM:UL4Ddb;" jsmodel="nXDxbd" id=":es" tabindex="-1" role="row" aria-labelledby=":et" draggable="false"><td class="PF xY"></td><td id=":eu" class="oZ-x3 xY" style="" data-tooltip="Select"><div id=":ev" class="oZ-jc T-Jo J-J5-Ji T-Jo-Jp" role="checkbox" aria-labelledby=":et" dir="ltr" aria-checked="true" tabindex="-1"><div class="T-Jo-auh"></div></div></td><td class="apU xY"><span id=":ew" class="aXw T-KT" aria-label="Not starred" role="button" data-tooltip="Not starred"><img class="T-KT-JX" src="images/cleardot.gif" alt="Not starred"></span></td><td class="yX xY " role="gridcell" tabindex="-1"><div id=":et" class="afn">selected, <span class="bA4"><span translate="no" class="yP" email="no-reply@spotify.com" name="Spotify" data-hovercard-id="no-reply@spotify.com">Spotify</span></span> <span class="bx0">11</span>, <span data-thread-id="#thread-f:1709164845431974072" data-legacy-thread-id="17b82c5f128ee8b8" data-legacy-last-message-id="17b82fbf0f8d17e8" data-legacy-last-non-draft-message-id="17b82fbf0f8d17e8">Confirm your new email address</span>, <span>Aug 26</span>, Your Spotify email address has changed. If you made the change, click to confirm your new email address. CONFIRM EMAIL If youre having trouble viewing the button above, please click this link.</div><div id=":ex" class="yW"><span class="bA4"><span translate="no" class="yP" email="no-reply@spotify.com" name="Spotify" data-hovercard-id="no-reply@spotify.com">Spotify</span></span> <span class="bx0">11</span></div></td><td id=":ey" tabindex="-1" class="xY a4W" role="gridcell"><div class="xS" role="link"><div class="xT"><div class="aj8"></div><div class="y6"><span id=":f0" class="bog"><span data-thread-id="#thread-f:1709164845431974072" data-legacy-thread-id="17b82c5f128ee8b8" data-legacy-last-message-id="17b82fbf0f8d17e8" data-legacy-last-non-draft-message-id="17b82fbf0f8d17e8">Confirm your new email address</span></span></div><span id=":f1" class="y2"><span class="Zt">&nbsp;-&nbsp;</span>Your Spotify email address has changed. If you made the change, click to confirm your new email address. CONFIRM EMAIL If youre having trouble viewing the button above, please click this link</span></div></div></td><td class="byZ xY" role="gridcell" tabindex="-1"></td><td class="yf xY ">&nbsp;</td><td class="xW xY " role="gridcell" tabindex="-1"><span title="Thu, Aug 26, 2021, 8:02 PM" id=":f3" aria-label="Thu, Aug 26, 2021, 8:02 PM"><span>Aug 26</span></span></td><td class="bq4 xY"><ul class="bqY" id=":f4" role="toolbar"><li class="bqX brq" data-tooltip="Archive" jsaction="JqEhuc" jscontroller="pk1i4d"></li><li class="bqX bru" data-tooltip="Delete" jsaction="zM6fo" jscontroller="pmCKac"></li><li class="bqX brs" data-tooltip="Mark as unread" jsaction="XdlY1e" jscontroller="VtSflc"></li><li class="bqX brv" data-tooltip="Snooze" jsaction="u4Fnue" jscontroller="PKSrle"></li></ul></td><td class="xY"></td></tr>'
+
+
+soup=bs4.BeautifulSoup(html,"html.parser")
+
+print(soup.prettify)
+print(soup.find("li","brs"))

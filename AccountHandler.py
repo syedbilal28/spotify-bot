@@ -29,18 +29,17 @@ def CreateAccounts(accounts_file,to_change_file):
     for i in range(l):
         changes_exist[i]=Account(changes_exist[i],None)
     change_file.close()
-    print(len(old_accounts),len(changes_exist))
+    
     to_change_accounts=[]
     for i in range(l):
         try:
             to_change_accounts.append(ChangeAccount(old_accounts[i],changes_exist[i]))
         except:
             pass
-    print(len(old_accounts))
-    print(len(changes_exist))
+    
     return to_change_accounts
 
-    print(len(to_change_accounts))
+    
 
 def get_proxies():
     infile=open("proxies.txt","r")
@@ -49,6 +48,13 @@ def get_proxies():
     proxies=[]
     for i in content:
         proxy=i.split(":")
-        proxies.append((proxy[0],int(proxy[1])))
-    print(proxies)
+        if len(proxy) >1:
+            l=len(proxy)
+            
+            for j in range(l):
+                
+                proxy[j]=proxy[j].replace("\n","")
+            
+            proxies.append((proxy[0],int(proxy[1])))
+    
     return proxies

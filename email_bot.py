@@ -42,16 +42,18 @@ def login(actions,driver,delay):
 def get_unread_emails(actions,driver,delay):
     unread_emails= find(actions,driver,delay,unread_emails_selector)
     selected_emails=[]
-    for j,i in enumerate(unread_emails):
-        innerhtml=i.get_attribute("innerHTML")
-        soup = bs4.BeautifulSoup(innerhtml,"html.parser")
-        tds=soup.find_all("td")
-        subject=tds[3].find("span",{"class":"zF"})
-        desc=tds[4].find("span",{"class":"bqe"})
-        if "Spotify" in subject:
-            
-            selected_emails.append(i)
-    return selected_emails
+    if unread_emails is not None:
+        for j,i in enumerate(unread_emails):
+            innerhtml=i.get_attribute("innerHTML")
+            soup = bs4.BeautifulSoup(innerhtml,"html.parser")
+            tds=soup.find_all("td")
+            subject=tds[3].find("span",{"class":"zF"})
+            desc=tds[4].find("span",{"class":"bqe"})
+            if "Spotify" in subject:
+                
+                selected_emails.append(i)
+        return selected_emails
+    return None
 def click_confirm(driver,actions):
     login(actions,driver,delay)
     selected_emails=get_unread_emails(actions,driver,delay)
@@ -97,14 +99,14 @@ def click_confirm(driver,actions):
                 if multiple_conf_buttons:
 
                     print("found confirm")
-                    for button in multiple_conf_buttons: 
+                    for confirm_count,button in enumerate(multiple_conf_buttons): 
                         # print(button.tag_name)
                         if button.tag_name =="td":
                             try:
                                 button.click()                        
                                 
-                                print('clicked confirm')
-                                time.sleep(2)
+                                print(f'clicked confirm, button number {confirm_count}')
+                                time.sleep(10)
                                 driver.switch_to_window(driver.window_handles[-1])
                                 driver.close()
                                 driver.switch_to_window(driver.window_handles[0])
@@ -121,9 +123,11 @@ def click_confirm(driver,actions):
                                 # driver.get("https://mail.google.com")
                             except:    
                             # print("going back except")
-                                driver.refresh()
+                                driver.quit()
                             # time.sleep(5)
-                    driver.back()
+                        else:
+                            pass
+                    driver.quit()
             else:
                 pass
 
@@ -143,73 +147,75 @@ def get_chromedriver(use_proxy=False, user_agent=None):
         path_driver,
         chrome_options=chrome_options)
     return driver
-count=4
+count=1
 proxies=get_proxies()
-for i in range(count):
-    num=random.randint(0,3)
-    PROXY_HOST = proxies[num][0]  # rotating proxy or host
-    PROXY_PORT = proxies[num][1] # port
-    
-    manifest_json = """
-    {
-        "version": "1.0.0",
-        "manifest_version": 2,
-        "name": "Chrome Proxy",
-        "permissions": [
-            "proxy",
-            "tabs",
-            "unlimitedStorage",
-            "storage",
-            "<all_urls>",
-            "webRequest",
-            "webRequestBlocking"
-        ],
-        "background": {
-            "scripts": ["background.js"]
-        },
-        "minimum_chrome_version":"22.0.0"
-    }
-    """
-
-    background_js = """
-    var config = {
-            mode: "fixed_servers",
-            rules: {
-            singleProxy: {
-                scheme: "http",
-                host: "%s",
-                port: parseInt(%s)
+l =len(proxies)
+while True:
+    if threading.activeCount() <= count:
+        num=random.randint(0,l-1)
+        PROXY_HOST = proxies[num][0]  # rotating proxy or host
+        PROXY_PORT = proxies[num][1] # port
+        
+        manifest_json = """
+        {
+            "version": "1.0.0",
+            "manifest_version": 2,
+            "name": "Chrome Proxy",
+            "permissions": [
+                "proxy",
+                "tabs",
+                "unlimitedStorage",
+                "storage",
+                "<all_urls>",
+                "webRequest",
+                "webRequestBlocking"
+            ],
+            "background": {
+                "scripts": ["background.js"]
             },
-            bypassList: ["localhost"]
-            }
-        };
+            "minimum_chrome_version":"22.0.0"
+        }
+        """
 
-    chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
+        background_js = """
+        var config = {
+                mode: "fixed_servers",
+                rules: {
+                singleProxy: {
+                    scheme: "http",
+                    host: "%s",
+                    port: parseInt(%s)
+                },
+                bypassList: ["localhost"]
+                }
+            };
 
-    function callbackFn(details) {
-        return {
-            
-        };
-    }
+        chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
 
-    chrome.webRequest.onAuthRequired.addListener(
-                callbackFn,
-                {urls: ["<all_urls>"]},
-                ['blocking']
-    );
-    """ % (PROXY_HOST, PROXY_PORT)
-    PROXY = f"{PROXY_HOST}:{PROXY_PORT}" # IP:PORT or HOST:PORT
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument('--proxy-server=%s' % PROXY)
-    driver = webdriver.Chrome("chromedriver.exe")
-    
-    actions = ActionChains(driver)
-    print(PROXY_HOST,PROXY_PORT)
-    try:
-        browserThread=threading.Thread(target=click_confirm,args=(driver,actions))
-        browserThread.start()
-    except:
-        pass
+        function callbackFn(details) {
+            return {
+                
+            };
+        }
+
+        chrome.webRequest.onAuthRequired.addListener(
+                    callbackFn,
+                    {urls: ["<all_urls>"]},
+                    ['blocking']
+        );
+        """ % (PROXY_HOST, PROXY_PORT)
+        PROXY = f"{PROXY_HOST}:{PROXY_PORT}" # IP:PORT or HOST:PORT
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument('--proxy-server=%s' % PROXY)
+        driver = webdriver.Chrome("chromedriver.exe")
+        
+        actions = ActionChains(driver)
+        print(PROXY_HOST,PROXY_PORT)
+        try:
+            browserThread=threading.Thread(target=click_confirm,args=(driver,actions))
+            browserThread.start()
+        except:
+            pass
 
 
 
