@@ -2,12 +2,23 @@
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from source import open_and_input,find,open_and_click,find_xpath
-import time,bs4
+import time,bs4,threading,random
+
+CURRENT_EMAIL_CONFIRMATION_BUTTON_COUNTER=None
+CURRENT_ACTIVE_UNREAD_EMAIL=None
 class EmailBot:
     def __init__(self,email,password):
         self.email=email
         self.password=password
-        self.driver = webdriver.Chrome("chromedriver.exe")
+        self.proxies=self.create_proxies("proxies.txt")
+        l= len(self.proxies)-1
+        num= random.randint(0,l)
+        PROXY_HOST=self.proxies[num][0]
+        PROXY_PORT=self.proxies[num][1]
+        PROXY = f"{PROXY_HOST}:{PROXY_PORT}" # IP:PORT or HOST:PORT
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument('--proxy-server=%s' % PROXY)
+        self.driver = webdriver.Chrome("chromedriver.exe",chrome_options=chrome_options)
         self.actions = ActionChains(self.driver)
         self.delay=30
         self.email_input_selector="input.whsOnd"
@@ -27,6 +38,17 @@ class EmailBot:
         time.sleep(10)
         open_and_input(self.actions,self.driver,self.delay,self.password_selector,self.password,0,True)
         
+    def RecreateDriver(self):
+        l= len(self.proxies)-1
+        num= random.randint(0,l)
+        PROXY_HOST=self.proxies[num][0]
+        PROXY_PORT=self.proxies[num][1]
+        PROXY = f"{PROXY_HOST}:{PROXY_PORT}" # IP:PORT or HOST:PORT
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument('--proxy-server=%s' % PROXY)
+        self.driver = webdriver.Chrome("chromedriver.exe",chrome_options=chrome_options)
+        self.actions = ActionChains(self.driver)
+
     
     def get_unread_emails(self):
         unread_emails= find(self.actions,self.driver,self.delay,self.unread_emails_selector)
@@ -44,21 +66,26 @@ class EmailBot:
             return selected_emails
         return None
     def click_unread_email(self):
-        unread_emails=self.get_unread_emails()
-        first_unread_email=unread_emails.pop(0)
-        self.current_active_unread_email=first_unread_email
-        first_unread_email.click()
+        if self.current_email_confirmation_button_counter !=0:
+            self.driver.get(self.current_email_url)
+            time.sleep(10)
+            
+        else:
+            unread_emails=self.get_unread_emails()
+            first_unread_email=unread_emails.pop(0)
+            self.current_active_unread_email=first_unread_email
+            first_unread_email.click()
 
     def click_more_button(self):
         more_buttons=find(self.actions,self.driver,10,self.more_selector)
-        print(f"more buttons {more_buttons}")
+        # print(f"more buttons {more_buttons}")
         if more_buttons:
             print("found more button")
             open_and_click(self.actions,self.driver,self.delay,self.more_selector)
 
     def click_all_email_boxes(self):
         confirm_email_div=find(self.actions,self.driver,15,self.confirm_emails_div_selector)
-        print(f"confirm buttons {confirm_email_div}")
+        # print(f"confirm buttons {confirm_email_div}")
         l=len(confirm_email_div)
         for i in range(l):
             # print(confirm_email_div[z].tag_name,confirm_email_div[z].get_attribute("innerHTML"))
@@ -66,7 +93,8 @@ class EmailBot:
 
     def click_confirm_email(self):
         confirm_email_buttons=find_xpath(self.actions,self.driver,10,self.confirm_email_button_xpath)
-        print(f"found emails {confirm_email_buttons}")
+        # print(f"found emails {confirm_email_buttons}")
+
         l=len(confirm_email_buttons)
         if confirm_email_buttons:
             print("found confirm")
@@ -74,6 +102,7 @@ class EmailBot:
                 # print(button.tag_name)
                 button=confirm_email_buttons[i]
                 self.current_email_confirmation_button_counter=i
+                self.current_email_url=self.driver.current_url
                 if button.tag_name =="td":
                     try:
                         button.click()
@@ -86,15 +115,19 @@ class EmailBot:
 
                         if "Too Many Requests" in body:
                             self.driver.switch_to_window(self.driver.window_handles[0])
-                            self.mark_email_as_unread()    
-                            # self.driver.quit()
-                            break
-                        # self.driver.close()
+                            # self.driver.close()
+                                
+                            self.driver.quit()
+                            return False
+                        
                         self.driver.switch_to_window(self.driver.window_handles[0])
                     except Exception as e:
                         print(f"Exception occured: {e}")
                         pass
+                self.driver.switch_to_window(self.driver.window_handles[0])  
             self.current_email_confirmation_button_counter=0
+            
+        return True
 
     def mark_email_as_unread(self):
         self.driver.back()
@@ -107,15 +140,28 @@ class EmailBot:
         self.actions.context_click(target).perform()
         time.sleep(10)
         mark_as_unread_button=find_xpath(self.actions,self.driver,10,self.mark_as_unread_box_xpath)
-        print(mark_as_unread_button)
+        # print(mark_as_unread_button)
         mark_as_unread_button[0].click()
 
 
-    # def confirm_email_change(self):
-        # self.click_unread_email()
-        # self.click_more_button()
-        # self.click_all_email_boxes()
-        # self.click_confirm_email()
+    def confirm_email_change(self):
+        self.unread_emails=self.get_unread_emails()
+        l= len(self.unread_emails)
+        for i in range(l):
+                try:
+                    self.click_unread_email()
+                    self.click_more_button()
+                    self.click_all_email_boxes()
+                    confirm_flag=self.click_confirm_email()
+                    if confirm_flag == False:
+                        return 0
+                    self.driver.back()
+                except Exception as e:
+                    print(e)
+                    self.driver.quit()
+                    self.RecreateDriver()
+                    self.get_to_work()
+        return True
 
     def test_for_unread(self):
         unread_emails=self.get_unread_emails()
@@ -125,14 +171,40 @@ class EmailBot:
         # self.driver.switch_to_window(self.driver.window_handles[0])
         
         self.current_active_unread_email=target
-        self.mark_email_as_unread()
-
-
+        
+    def get_to_work(self):
+        self.login()
+        flag=self.confirm_email_change()
+        if flag==0:
+            self.RecreateDriver()
+            self.get_to_work()
+    def create_proxies(self,path):
+        infile=open(path,"r")
+        content=infile.readlines()
+        infile.close()
+        self.proxies=[]
+        for i in content:
+            proxy=i.split(":")
+            if len(proxy) >1:
+                l=len(proxy)
+                
+                for j in range(l):
+                    
+                    proxy[j]=proxy[j].replace("\n","")
+                
+                self.proxies.append((proxy[0],int(proxy[1])))
+        
+        return self.proxies
 
 if __name__ == "__main__":
-    email="bigbloggerdeluxe@gmail.com"
-    password="Testkit1"
+    infile=open("email.txt","r")
+    content=infile.read()
+    infile.close()
+    content=content.split(":")
+    email=content[0]
+    password=content[1]
     email_bot=EmailBot(email,password)
-    email_bot.login()
-    # email_bot.confirm_email_change()
-    email_bot.test_for_unread()
+    email_bot.get_to_work()
+            
+            
+    
